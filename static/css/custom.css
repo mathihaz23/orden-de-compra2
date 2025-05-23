@@ -1,0 +1,156 @@
+/* static/css/custom.css */
+
+/* Estilos Generales */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f8f9fa; /* Fondo claro para el contenido */
+}
+
+/* Estilos para la Sidebar */
+#sidebar {
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+    height: 100vh;
+    position: fixed;
+    top: 56px; /* Altura de la navbar */
+    left: 0;
+    background: #343a40; /* Fondo oscuro */
+    color: #fff; /* Texto blanco */
+    transition: all 0.3s;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+#sidebar.active {
+    left: -250px;
+}
+
+/* Encabezado de la Sidebar */
+#sidebar .sidebar-heading {
+    padding: 1rem;
+    font-size: 1.5rem;
+    text-align: center;
+    background: #23272b;
+    border-bottom: 1px solid #495057;
+}
+
+/* Enlaces de la Sidebar */
+#sidebar .components {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+#sidebar .components li a {
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    display: block;
+    color: #adb5bd;
+    transition: all 0.3s;
+}
+
+#sidebar .components li a:hover, 
+#sidebar .components li a.active {
+    background: #495057;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+    border-left: 4px solid #007bff;
+}
+
+/* Submenús en la Sidebar */
+#sidebar .components li ul a {
+    font-size: 0.95rem;
+    padding-left: 40px;
+    background: #495057;
+    color: #ced4da;
+}
+
+#sidebar .components li ul a:hover, 
+#sidebar .components li ul a.active {
+    background: #6c757d;
+    color: #ffffff;
+}
+
+/* Iconos en la Sidebar */
+#sidebar .components li a i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Contenido Principal Ajustado */
+main {
+    margin-left: 250px;
+    transition: all 0.3s;
+}
+
+#sidebar.active + main {
+    margin-left: 0;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+    #sidebar {
+        left: -250px;
+    }
+    #sidebar.active {
+        left: 0;
+    }
+    main {
+        margin-left: 0;
+    }
+}
+
+/* Estilos para el Botón de Toggle */
+.sidebar-toggler {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1100;
+    background: #007bff;
+    border: none;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: background 0.3s;
+}
+
+.sidebar-toggler:hover {
+    background: #0056b3;
+}
+
+/* Estilos para el Footer */
+footer {
+    background-color: #343a40;
+    color: white;
+}
+
+/* Estilos para las Tarjetas */
+.card {
+    border: none;
+}
+
+.card .card-title {
+    font-size: 1.2rem;
+}
+
+.card .display-4 {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+/* Estilos para Gráficos */
+canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Estilo para el Mensaje de Bienvenida */
+h2.mb-4 {
+    font-weight: 700;
+    color: #343a40;
+}
