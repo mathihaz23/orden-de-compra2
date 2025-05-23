@@ -1,0 +1,200 @@
+<!-- templates/crear_solicitud.html -->
+
+{% extends 'base.html' %}
+{% block title %}Crear Solicitud{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4">Crear Nueva Solicitud</h2>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('main.crear_solicitud') }}" id="crear-solicitud-form">
+                {{ form.hidden_tag() }}
+                
+                <!-- Sección de Información General -->
+                <div class="mb-4">
+                    <h4>Información General</h4>
+                    <div class="row">
+                        <!-- Centro de Costo -->
+                        <div class="col-md-6 mb-3">
+                            {{ form.centro_costo.label(class="form-label") }}
+                            {{ form.centro_costo(class="form-control") }}
+                            {% for error in form.centro_costo.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <!-- Fecha -->
+                        <div class="col-md-6 mb-3">
+                            {{ form.fecha.label(class="form-label") }}
+                            {{ form.fecha(class="form-control") }}
+                            {% for error in form.fecha.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sección de Productos -->
+                <div class="mb-4">
+                    <h4>Productos</h4>
+                    <div id="productos-lista">
+                        <!-- No hay productos por defecto -->
+                    </div>
+                    
+                    <!-- Botón para Agregar Producto -->
+                    <button type="button" class="btn btn-secondary" id="agregar-producto">
+                        <i class="fas fa-plus-circle me-2"></i> Agregar Producto
+                    </button>
+                </div>
+                
+                <!-- Botón de Envío del Formulario -->
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i> Crear Solicitud
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Confirmar Eliminación -->
+<div class="modal fade" id="confirmarEliminacionModal" tabindex="-1" aria-labelledby="confirmarEliminacionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar este producto de la solicitud?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmar-eliminacion">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Incluye jQuery y Bootstrap JS (para Bootstrap 4) -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Incluir FontAwesome para íconos -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let productoIndex = 0;  // Índice inicial para los productos
+        const maxProductos = {{ form.productos.max_entries }};
+        const productosLista = document.getElementById('productos-lista');
+        const agregarProductoBtn = document.getElementById('agregar-producto');
+        const confirmarEliminacionModal = $('#confirmarEliminacionModal');
+        let productoAEliminar = null;
+
+        // Función para crear un nuevo formulario de producto
+        function crearNuevoProducto() {
+            if (productoIndex >= maxProductos) {
+                alert('Has alcanzado el número máximo de productos permitidos.');
+                return;
+            }
+
+            // Plantilla HTML para un nuevo producto
+            const productoHTML = `
+                <div class="card mb-3 producto-item">
+                    <div class="card-body">
+                        <div class="row align-items-end">
+                            <!-- Categoría -->
+                            <div class="col-md-4 mb-3">
+                                <label for="productos-${productoIndex}-categoria" class="form-label">Categoría</label>
+                                <select class="form-control categoria-select" name="productos-${productoIndex}-categoria" id="productos-${productoIndex}-categoria" required>
+                                    <option value="">Seleccione una categoría</option>
+                                    {% for categoria in form.productos.entries[0].categoria.choices %}
+                                        <option value="{{ categoria[0] }}">{{ categoria[1] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Producto -->
+                            <div class="col-md-4 mb-3">
+                                <label for="productos-${productoIndex}-producto" class="form-label">Producto</label>
+                                <select class="form-control producto-select" name="productos-${productoIndex}-producto" id="productos-${productoIndex}-producto" required>
+                                    <option value="">Seleccione una categoría primero</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Cantidad -->
+                            <div class="col-md-2 mb-3">
+                                <label for="productos-${productoIndex}-cantidad" class="form-label">Cantidad</label>
+                                <input type="number" class="form-control cantidad-input" name="productos-${productoIndex}-cantidad" id="productos-${productoIndex}-cantidad" min="1" value="1" required>
+                            </div>
+                            
+                            <!-- Botón Eliminar -->
+                            <div class="col-md-2 mb-3">
+                                <button type="button" class="btn btn-danger w-100 eliminar-producto">
+                                    <i class="fas fa-trash-alt"></i> Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Insertar el nuevo producto en la lista
+            productosLista.insertAdjacentHTML('beforeend', productoHTML);
+            productoIndex++;
+        }
+
+        // Evento para agregar un nuevo producto
+        agregarProductoBtn.addEventListener('click', crearNuevoProducto);
+
+        // Evento para abrir el modal de confirmación al hacer clic en eliminar
+        productosLista.addEventListener('click', function(e) {
+            if (e.target.closest('.eliminar-producto')) {
+                productoAEliminar = e.target.closest('.producto-item');
+                confirmarEliminacionModal.modal('show');
+            }
+        });
+
+        // Evento para confirmar la eliminación
+        document.getElementById('confirmar-eliminacion').addEventListener('click', function() {
+            if (productoAEliminar) {
+                productoAEliminar.remove();
+                productoAEliminar = null;
+                confirmarEliminacionModal.modal('hide');
+                productoIndex--;
+            }
+        });
+
+        // Función para manejar el cambio de categoría y cargar productos
+        productosLista.addEventListener('change', function(e) {
+            if (e.target.classList.contains('categoria-select')) {
+                const categoriaId = e.target.value;
+                const productoSelect = e.target.closest('.producto-item').querySelector('.producto-select');
+                productoSelect.innerHTML = '<option value="">Cargando...</option>';
+
+                if (categoriaId) {
+                    fetch(`{{ url_for('main.obtener_productos_por_categoria') }}?categoria_id=${categoriaId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            let opciones = '<option value="">Seleccione un producto</option>';
+                            data.productos.forEach(producto => {
+                                opciones += `<option value="${producto.id}">${producto.nombre}</option>`;
+                            });
+                            productoSelect.innerHTML = opciones;
+                        })
+                        .catch(() => {
+                            productoSelect.innerHTML = '<option value="">Error al cargar productos</option>';
+                        });
+                } else {
+                    productoSelect.innerHTML = '<option value="">Seleccione una categoría primero</option>';
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

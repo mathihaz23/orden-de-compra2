@@ -1,0 +1,14 @@
+<!-- templates/perfil.html -->
+
+{% extends 'base.html' %}
+
+{% block title %}Perfil{% endblock %}
+
+{% block content %}
+<h2>Perfil de {{ current_user.nombre_usuario }}</h2>
+<ul class="list-group">
+    <li class="list-group-item"><strong>Nombre de Usuario:</strong> {{ current_user.nombre_usuario }}</li>
+    <li class="list-group-item"><strong>Correo Electrónico:</strong> {{ current_user.correo }}</li>
+    <li class="list-group-item"><strong>Rol:</strong> {{ current_user.rol }}</li>
+</ul>
+{% endblock %}

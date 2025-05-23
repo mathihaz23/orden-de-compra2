@@ -1,0 +1,146 @@
+<!-- templates/crear_proveedor.html -->
+
+{% extends 'base.html' %}
+{% block title %}Lista de Proveedores{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Lista de Proveedores</h2>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Botón para abrir el Modal de Crear Proveedor -->
+    {% if 'revisor' in current_user.rol or 'supervisor' in current_user.rol %}
+        <button type="button" class="btn btn-success mb-3" data-toggle="modal" data-target="#crearProveedorModal">
+            <i class="fas fa-plus"></i> Crear Proveedor
+        </button>
+    {% endif %}
+
+    <!-- Tabla de Proveedores -->
+    {% if proveedores %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Correo Electrónico</th>
+                        <th>Teléfono</th>
+                        <th>Dirección</th>
+                        <th>Descripción</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proveedor in proveedores %}
+                        <tr>
+                            <td>{{ proveedor.id }}</td>
+                            <td>{{ proveedor.nombre }}</td>
+                            <td>{{ proveedor.correo }}</td>
+                            <td>{{ proveedor.telefono }}</td>
+                            <td>{{ proveedor.direccion }}</td>
+                            <td>
+                                {% if proveedor.descripcion %}
+                                    {{ proveedor.descripcion[:50] }}{% if proveedor.descripcion|length > 50 %}...{% endif %}
+                                {% else %}
+                                    <span class="text-muted">Sin descripción</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <!-- Botón de Acción: Editar -->
+                                <a href="{{ url_for('main.editar_proveedor', proveedor_id=proveedor.id) }}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                <!-- Puedes añadir más acciones aquí si lo deseas -->
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">No hay proveedores registrados.</p>
+    {% endif %}
+
+    <!-- Modal para Crear Nuevo Proveedor -->
+    <div class="modal fade" id="crearProveedorModal" tabindex="-1" role="dialog" aria-labelledby="crearProveedorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Crear Nuevo Proveedor</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="POST" action="{{ url_for('main.lista_proveedores') }}">
+                    <div class="modal-body">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group">
+                            {{ form.nombre.label(class="form-label", for="nombre") }} <span class="text-danger">*</span>
+                            {{ form.nombre(class="form-control", placeholder="Ingrese el nombre del proveedor", id="nombre", required=True) }}
+                            {% for error in form.nombre.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.correo.label(class="form-label", for="correo") }} <span class="text-danger">*</span>
+                            {{ form.correo(class="form-control", placeholder="Ingrese el correo electrónico del proveedor", id="correo", type="email", required=True) }}
+                            {% for error in form.correo.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.telefono.label(class="form-label", for="telefono") }} <span class="text-danger">*</span>
+                            {{ form.telefono(class="form-control", placeholder="Ingrese el teléfono del proveedor", id="telefono", required=True) }}
+                            {% for error in form.telefono.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.direccion.label(class="form-label", for="direccion") }} <span class="text-danger">*</span>
+                            {{ form.direccion(class="form-control", placeholder="Ingrese la dirección del proveedor", id="direccion", required=True) }}
+                            {% for error in form.direccion.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.descripcion.label(class="form-label", for="descripcion") }} <span class="text-danger">*</span>
+                            {{ form.descripcion(class="form-control", placeholder="Ingrese una descripción del proveedor", id="descripcion", rows="3", required=True) }}
+                            {% for error in form.descripcion.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos Adicionales (Opcional) -->
+<style>
+    /* Añadir estilos personalizados aquí si es necesario */
+</style>
+
+{% endblock %}

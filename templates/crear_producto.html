@@ -1,0 +1,116 @@
+<!-- templates/crear_producto.html -->
+
+{% extends 'base.html' %}
+{% block title %}Crear Producto{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Crear Nuevo Producto</h2>
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('main.crear_producto') }}">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    {{ form.nombre.label(class="form-label") }}
+                    <span class="text-danger">*</span>
+                    {{ form.nombre(class="form-control", placeholder="Ingrese el nombre del producto") }}
+                    {% for error in form.nombre.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.descripcion.label(class="form-label") }}
+                    {{ form.descripcion(class="form-control", placeholder="Ingrese una descripción del producto") }}
+                    {% for error in form.descripcion.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.especificaciones.label(class="form-label") }}
+                    {{ form.especificaciones(class="form-control", placeholder="Ingrese especificaciones del producto") }}
+                    {% for error in form.especificaciones.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.cantidad.label(class="form-label") }}
+                    <span class="text-danger">*</span>
+                    {{ form.cantidad(class="form-control", min="1", placeholder="Ingrese la cantidad") }}
+                    {% for error in form.cantidad.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.categoria.label(class="form-label") }}
+                    <span class="text-danger">*</span>
+                    {{ form.categoria(class="form-control") }}
+                    {% for error in form.categoria.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla Dinámica de Productos -->
+    <h3>Lista de Productos</h3>
+    <table id="productosTable" class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Especificaciones</th>
+                <th>Cantidad</th>
+                <th>Categoría</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+                <tr>
+                    <td>{{ producto.id }}</td>
+                    <td>{{ producto.nombre }}</td>
+                    <td>{{ producto.descripcion }}</td>
+                    <td>{{ producto.especificaciones }}</td>
+                    <td>{{ producto.cantidad }}</td>
+                    <td>{{ producto.categoria.nombre }}</td>
+                    <td>
+                        <a href="{{ url_for('main.editar_producto', producto_id=producto.id) }}" class="btn btn-warning btn-sm">Editar</a>
+                        <form method="POST" action="{{ url_for('main.eliminar_producto', producto_id=producto.id) }}" style="display:inline;">
+                            {{ eliminar_form.hidden_tag() }}
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este producto?');">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Incluir CSS de DataTables -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
+
+<!-- Incluir jQuery y JS de DataTables -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $('#productosTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+            },
+            "pageLength": 10,
+            "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "Todos"] ],
+            "columnDefs": [
+                { "orderable": true, "targets": [0, 1, 4, 5, 6] },
+                { "orderable": false, "targets": [2, 3] }
+            ]
+        });
+    });
+</script>
+{% endblock %}

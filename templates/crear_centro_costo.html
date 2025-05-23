@@ -1,0 +1,169 @@
+<!-- templates/crear_centro_costo.html -->
+
+{% extends 'base.html' %}
+{% block title %}Lista de Centros de Costo{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Lista de Centros de Costo</h2>
+
+    <!-- Mensajes Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Botón para abrir el Modal de Crear Centro de Costo -->
+    {% if 'revisor' in current_user.rol or 'supervisor' in current_user.rol %}
+        <button type="button" class="btn btn-success mb-3" data-toggle="modal" data-target="#crearCentroCostoModal">
+            <i class="fas fa-plus"></i> Crear Centro de Costo
+        </button>
+    {% endif %}
+
+    <!-- Tabla de Centros de Costo -->
+    {% if centros_costo %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for centro in centros_costo %}
+                        <tr>
+                            <td>{{ centro.id }}</td>
+                            <td>{{ centro.nombre }}</td>
+                            <td>
+                                {% if centro.descripcion %}
+                                    {{ centro.descripcion[:50] }}{% if centro.descripcion|length > 50 %}...{% endif %}
+                                {% else %}
+                                    <span class="text-muted">Sin descripción</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <!-- Botón de Acción: Editar -->
+                                <button type="button" class="btn btn-warning btn-sm editar-btn" data-toggle="modal" data-target="#editarCentroCostoModal" data-id="{{ centro.id }}" data-nombre="{{ centro.nombre }}" data-descripcion="{{ centro.descripcion }}">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">No hay Centros de Costo registrados.</p>
+    {% endif %}
+
+    <!-- Modal para Crear Nuevo Centro de Costo -->
+    <div class="modal fade" id="crearCentroCostoModal" tabindex="-1" role="dialog" aria-labelledby="crearCentroCostoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Crear Nuevo Centro de Costo</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="POST" action="{{ url_for('main.crear_centro_costo') }}">
+                    <div class="modal-body">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group">
+                            {{ form.nombre.label(class="form-label") }} <span class="text-danger">*</span>
+                            {{ form.nombre(class="form-control", placeholder="Ingrese el nombre del Centro de Costo", required=True) }}
+                            {% for error in form.nombre.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.descripcion.label(class="form-label") }} <span class="text-danger">*</span>
+                            {{ form.descripcion(class="form-control", placeholder="Ingrese una descripción del Centro de Costo", rows="3", required=True) }}
+                            {% for error in form.descripcion.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Centro de Costo -->
+    <div class="modal fade" id="editarCentroCostoModal" tabindex="-1" role="dialog" aria-labelledby="editarCentroCostoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Centro de Costo</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="POST" id="editarCentroCostoForm">
+                    <div class="modal-body">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group">
+                            {{ form.nombre.label(class="form-label") }} <span class="text-danger">*</span>
+                            <input type="text" name="nombre" class="form-control" id="editar_nombre" placeholder="Ingrese el nombre del Centro de Costo" required>
+                            {% for error in form.nombre.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.descripcion.label(class="form-label") }} <span class="text-danger">*</span>
+                            <textarea name="descripcion" class="form-control" id="editar_descripcion" placeholder="Ingrese una descripción del Centro de Costo" rows="3" required></textarea>
+                            {% for error in form.descripcion.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para manejar el llenado del modal de edición -->
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const editarModal = $('#editarCentroCostoModal');
+        editarModal.on('show.bs.modal', function(event) {
+            const button = $(event.relatedTarget); // Botón que abrió el modal
+            const id = button.data('id');
+            const nombre = button.data('nombre');
+            const descripcion = button.data('descripcion');
+
+            // Actualizar el formulario del modal
+            const form = $('#editarCentroCostoForm');
+            form.attr('action', '{{ url_for("main.editar_centro_costo", centro_id=0) }}'.replace('0', id));
+            form.find('#editar_nombre').val(nombre);
+            form.find('#editar_descripcion').val(descripcion);
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

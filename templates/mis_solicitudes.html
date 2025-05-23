@@ -1,0 +1,129 @@
+<!-- mis_solicitudes.html -->
+
+{% extends 'base.html' %}
+{% block title %}Mis Solicitudes{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if solicitudes %}
+        <ul class="list-group">
+            {% for solicitud in solicitudes %}
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p><strong>Solicitud:</strong> {{ solicitud.id }}</p>
+                            <p><strong>Fecha:</strong> {{ solicitud.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+                            <p><strong>Centro de Costos:</strong> {{ solicitud.centro_costo.nombre }}</p>
+                            <p><strong>Estado:</strong> 
+                                {% if solicitud.estado == 'Pendiente' %}
+                                    <span class="badge badge-warning">{{ solicitud.estado }}</span>
+                                {% elif solicitud.estado == 'Aprobada' %}
+                                    <span class="badge badge-success">{{ solicitud.estado }}</span>
+                                {% elif solicitud.estado == 'Rechazada' %}
+                                    <span class="badge badge-danger">{{ solicitud.estado }}</span>
+                                {% elif solicitud.estado == 'En proceso' %}
+                                    <span class="badge badge-primary">{{ solicitud.estado }}</span>
+                                {% elif solicitud.estado == 'Recepcionado' %}
+                                    <span class="badge badge-info">{{ solicitud.estado }} - Listo para retiro</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ solicitud.estado }}</span>
+                                {% endif %}
+                            </p>
+                            <!-- Campo "Proveedor Seleccionado" Condicional -->
+                            {% if solicitud.estado == 'Aprobada' and current_user.rol in ['revisor', 'admin'] %}
+                                <p><strong>Proveedor Seleccionado:</strong> 
+                                    {% if solicitud.proveedor_seleccionado %}
+                                        {{ solicitud.proveedor_seleccionado.nombre }}
+                                    {% else %}
+                                        <span>No asignado</span>
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                        <!-- Botón Ver Detalles que dispara el modal -->
+                        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#detalleModal{{ solicitud.id }}">
+                            <i class="fas fa-eye"></i> Ver Detalles
+                        </button>
+                    </div>
+
+                    <!-- Modal para Detalles de la Solicitud -->
+                    <div class="modal fade" id="detalleModal{{ solicitud.id }}" tabindex="-1" role="dialog" aria-labelledby="detalleModalLabel{{ solicitud.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-lg" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="detalleModalLabel{{ solicitud.id }}">Detalles de la Solicitud #{{ solicitud.id }}</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <!-- Información Básica de la Solicitud -->
+                                    <p><strong>Solicitante:</strong> {{ solicitud.solicitante.nombre_usuario }}</p>
+                                    <p><strong>Fecha:</strong> {{ solicitud.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+                                    <p><strong>Centro de Costos:</strong> {{ solicitud.centro_costo.nombre }}</p>
+
+                                    <!-- Detalles de Productos -->
+                                    <h5>Productos</h5>
+                                    <ul>
+                                        {% for ps in solicitud.productos_solicitudes %}
+                                            <li>
+                                                {{ ps.producto.nombre }} - {{ ps.cantidad }} unidades
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+
+                                    <!-- Historial de Estados (Aprobaciones y Recepciones) -->
+                                    <h5>Historial de Estados</h5>
+                                    <ul class="list-unstyled">
+                                        {% set eventos = solicitudes_eventos[solicitud.id] %}
+                                        {% if eventos %}
+                                            {% for evento in eventos %}
+                                                <li class="mb-3">
+                                                    <div class="d-flex align-items-start">
+                                                        {% if evento.tipo == 'aprobacion' %}
+                                                            <!-- Icono de Aprobación -->
+                                                            <i class="fas fa-check-circle fa-lg text-success mr-2" data-toggle="tooltip" title="Aprobación exitosa"></i>
+                                                        {% elif evento.tipo == 'recepcion' %}
+                                                            <!-- Icono de Recepción -->
+                                                            <i class="fas fa-box-open fa-lg text-info mr-2" data-toggle="tooltip" title="Recepción de productos"></i>
+                                                        {% endif %}
+                                                        <div>
+                                                            {% if evento.tipo == 'aprobacion' %}
+                                                                <p class="mb-0"><strong>Fecha de Aprobación:</strong> {{ evento.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+                                                                <p class="mb-0"><strong>Estado:</strong> {{ evento.estado }}</p>
+                                                                <p class="mb-0"><strong>Aprobado por:</strong> {{ evento.usuario }}</p>
+                                                                <p class="mb-0"><strong>Comentario:</strong> {{ evento.comentario }}</p>
+                                                            {% elif evento.tipo == 'recepcion' %}
+                                                                <p class="mb-0"><strong>Fecha de Recepción:</strong> {{ evento.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+                                                                <p class="mb-0"><strong>Estado:</strong> 
+                                                                    {{ evento.estado }}
+                                                                    {% if evento.estado == 'Recepcionado' %}
+                                                                        <span class="text-success"> - Listo para retiro</span>
+                                                                    {% endif %}
+                                                                </p>
+                                                                <p class="mb-0"><strong>Comentario:</strong> {{ evento.comentario }}</p>
+                                                                <p class="mb-0"><strong>Recepcionado Por:</strong> {{ evento.usuario }}</p>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            {% endfor %}
+                                        {% else %}
+                                            <p>No hay historial de estados para esta solicitud.</p>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">No has creado ninguna solicitud aún.</p>
+    {% endif %}
+</div>
+{% endblock %}

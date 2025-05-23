@@ -1,0 +1,300 @@
+<!-- templates/revisar_solicitudes.html -->
+
+{% extends 'base.html' %}
+{% block title %}Revisar Solicitudes{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Revisar Solicitudes</h2>
+    <hr>
+    
+    <!-- Formulario de Filtros -->
+    <form method="GET" action="{{ url_for('main.revisar_solicitudes') }}" class="form-inline mb-4">
+        <div class="form-group mr-2">
+            <label for="solicitante_id" class="mr-2">Solicitante:</label>
+            <select name="solicitante_id" id="solicitante_id" class="form-control">
+                <option value="">Todos</option>
+                {% for solicitante in solicitantes %}
+                    <option value="{{ solicitante.id }}" {% if request.args.get('solicitante_id', type=int) == solicitante.id %}selected{% endif %}>{{ solicitante.nombre_usuario }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group mr-2">
+            <label for="proveedor_id" class="mr-2">Proveedor:</label>
+            <select name="proveedor_id" id="proveedor_id" class="form-control">
+                <option value="">Todos</option>
+                {% for proveedor in proveedores %}
+                    <option value="{{ proveedor.id }}" {% if request.args.get('proveedor_id', type=int) == proveedor.id %}selected{% endif %}>{{ proveedor.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group mr-2">
+            <label for="fecha_inicio" class="mr-2">Fecha Inicio:</label>
+            <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{{ request.args.get('fecha_inicio', '') }}">
+        </div>
+        
+        <div class="form-group mr-2">
+            <label for="fecha_fin" class="mr-2">Fecha Fin:</label>
+            <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{{ request.args.get('fecha_fin', '') }}">
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+    </form>
+    
+    <!-- Pestañas -->
+    <ul class="nav nav-tabs" id="solicitudesTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="pendientes-tab" data-toggle="tab" href="#pendientes" role="tab" aria-controls="pendientes" aria-selected="true">Pendientes</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="en_proceso-tab" data-toggle="tab" href="#en_proceso" role="tab" aria-controls="en_proceso" aria-selected="false">En Proceso</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="aprobadas-tab" data-toggle="tab" href="#aprobadas" role="tab" aria-controls="aprobadas" aria-selected="false">Aprobadas</a>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="solicitudesTabContent">
+        <!-- Tab de Solicitudes Pendientes -->
+        <div class="tab-pane fade show active" id="pendientes" role="tabpanel" aria-labelledby="pendientes-tab">
+            {% if solicitudes_pendientes %}
+                <table class="table table-bordered table-hover mt-3">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Solicitante</th>
+                            <th>Centro de Costo</th>
+                            <th>Fecha</th>
+                            <th>Gasto Total</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for solicitud in solicitudes_pendientes %}
+                        <tr>
+                            <td>{{ solicitud.id }}</td>
+                            <td>{{ solicitud.solicitante.nombre_usuario }}</td>
+                            <td>{{ solicitud.centro_costo.nombre }}</td>
+                            <td>{{ solicitud.fecha.strftime('%d/%m/%Y') }}</td>
+                            <td>${{ "{:,.2f}".format(solicitud.gasto_total) }}</td>
+                            <td>
+                                <a href="{{ url_for('main.ver_detalle_solicitud', solicitud_id=solicitud.id) }}" class="btn btn-info btn-sm">Ver Detalle</a>
+                                <!-- Puedes agregar más acciones aquí si es necesario -->
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="alert alert-info mt-3" role="alert">
+                    No hay solicitudes pendientes.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Tab de Solicitudes en Proceso -->
+        <div class="tab-pane fade" id="en_proceso" role="tabpanel" aria-labelledby="en_proceso-tab">
+            {% if solicitudes_en_proceso %}
+                <table class="table table-bordered table-hover mt-3">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Solicitante</th>
+                            <th>Centro de Costo</th>
+                            <th>Proveedor Seleccionado</th>
+                            <th>Fecha de Inicio</th>
+                            <th>Gasto Total</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for solicitud in solicitudes_en_proceso %}
+                        <tr>
+                            <td>{{ solicitud.id }}</td>
+                            <td>{{ solicitud.solicitante.nombre_usuario }}</td>
+                            <td>{{ solicitud.centro_costo.nombre }}</td>
+                            <td>
+                                {% if solicitud.proveedor_seleccionado %}
+                                    {{ solicitud.proveedor_seleccionado.nombre }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if solicitud.fecha_inicio %}
+                                    {{ solicitud.fecha_inicio.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>${{ "{:,.2f}".format(solicitud.gasto_total) }}</td>
+                            <td>
+                                <a href="{{ url_for('main.ver_detalle_solicitud', solicitud_id=solicitud.id) }}" class="btn btn-info btn-sm">Ver Detalle</a>
+                                <!-- Puedes agregar más acciones aquí si es necesario -->
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Controles de Paginación -->
+                {% if pagination_en_proceso.pages > 1 %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if pagination_en_proceso.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('main.revisar_solicitudes', page=pagination_en_proceso.prev_num, solicitante_id=request.args.get('solicitante_id'), proveedor_id=request.args.get('proveedor_id'), fecha_inicio=request.args.get('fecha_inicio'), fecha_fin=request.args.get('fecha_fin')) }}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for page_num in pagination_en_proceso.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+                                {% if page_num %}
+                                    {% if page_num == pagination_en_proceso.page %}
+                                        <li class="page-item active"><a class="page-link" href="#">{{ page_num }}</a></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link" href="{{ url_for('main.revisar_solicitudes', page=page_num, solicitante_id=request.args.get('solicitante_id'), proveedor_id=request.args.get('proveedor_id'), fecha_inicio=request.args.get('fecha_inicio'), fecha_fin=request.args.get('fecha_fin')) }}">{{ page_num }}</a></li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pagination_en_proceso.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('main.revisar_solicitudes', page=pagination_en_proceso.next_num, solicitante_id=request.args.get('solicitante_id'), proveedor_id=request.args.get('proveedor_id'), fecha_inicio=request.args.get('fecha_inicio'), fecha_fin=request.args.get('fecha_fin')) }}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info mt-3" role="alert">
+                    No hay solicitudes en proceso.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Tab de Solicitudes Aprobadas -->
+        <div class="tab-pane fade" id="aprobadas" role="tabpanel" aria-labelledby="aprobadas-tab">
+            {% if solicitudes_aprobadas %}
+                <table class="table table-bordered table-hover mt-3">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Solicitante</th>
+                            <th>Centro de Costo</th>
+                            <th>Proveedor Seleccionado</th>
+                            <th>Fecha de Aprobación</th>
+                            <th>Gasto Total</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for solicitud in solicitudes_aprobadas %}
+                        <tr>
+                            <td>{{ solicitud.id }}</td>
+                            <td>{{ solicitud.solicitante.nombre_usuario }}</td>
+                            <td>{{ solicitud.centro_costo.nombre }}</td>
+                            <td>
+                                {% if solicitud.proveedor_seleccionado %}
+                                    {{ solicitud.proveedor_seleccionado.nombre }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if solicitud.fecha_aprobacion %}
+                                    {{ solicitud.fecha_aprobacion.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>${{ "{:,.2f}".format(solicitud.gasto_total) }}</td>
+                            <td>
+                                <a href="{{ url_for('main.ver_detalle_solicitud', solicitud_id=solicitud.id) }}" class="btn btn-info btn-sm">Ver Detalle</a>
+                                {% if solicitud.proveedor_seleccionado %}
+                                    <a href="{{ url_for('main.generar_pdf', solicitud_id=solicitud.id, proveedor_id=solicitud.proveedor_seleccionado.id) }}" class="btn btn-secondary btn-sm" target="_blank">Generar PDF</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Controles de Paginación -->
+                {% if pagination_aprobadas.pages > 1 %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if pagination_aprobadas.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('main.revisar_solicitudes', page=pagination_aprobadas.prev_num, solicitante_id=request.args.get('solicitante_id'), proveedor_id=request.args.get('proveedor_id'), fecha_inicio=request.args.get('fecha_inicio'), fecha_fin=request.args.get('fecha_fin')) }}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for page_num in pagination_aprobadas.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+                                {% if page_num %}
+                                    {% if page_num == pagination_aprobadas.page %}
+                                        <li class="page-item active"><a class="page-link" href="#">{{ page_num }}</a></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link" href="{{ url_for('main.revisar_solicitudes', page=page_num, solicitante_id=request.args.get('solicitante_id'), proveedor_id=request.args.get('proveedor_id'), fecha_inicio=request.args.get('fecha_inicio'), fecha_fin=request.args.get('fecha_fin')) }}">{{ page_num }}</a></li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pagination_aprobadas.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('main.revisar_solicitudes', page=pagination_aprobadas.next_num, solicitante_id=request.args.get('solicitante_id'), proveedor_id=request.args.get('proveedor_id'), fecha_inicio=request.args.get('fecha_inicio'), fecha_fin=request.args.get('fecha_fin')) }}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info mt-3" role="alert">
+                    No hay solicitudes aprobadas para mostrar con los filtros seleccionados.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Asegúrate de incluir los scripts de Bootstrap JS para que las pestañas funcionen correctamente -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+{% endblock %}

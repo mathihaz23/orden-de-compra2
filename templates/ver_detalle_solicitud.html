@@ -1,0 +1,350 @@
+<!-- templates/ver_detalle_solicitud.html -->
+
+{% extends 'base.html' %}
+{% block title %}Detalles de Solicitud{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Detalles de la Solicitud #{{ solicitud.id }}</h2>
+
+    <!-- Información de la Solicitud -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <p><strong>Solicitante:</strong> {{ solicitud.solicitante.nombre_usuario }}</p>
+            <p><strong>Fecha:</strong> {{ solicitud.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+            <p><strong>Estado:</strong> 
+                {% if solicitud.estado == 'Pendiente' %}
+                    <span class="badge badge-warning">{{ solicitud.estado }}</span>
+                {% elif solicitud.estado == 'Aprobada' %}
+                    <span class="badge badge-success">{{ solicitud.estado }}</span>
+                {% elif solicitud.estado == 'Rechazada' %}
+                    <span class="badge badge-danger">{{ solicitud.estado }}</span>
+                {% elif solicitud.estado == 'Recepcionado' %}
+                    <span class="badge badge-info">{{ solicitud.estado }}</span>
+                {% else %}
+                    {{ solicitud.estado }}
+                {% endif %}
+            </p>
+            <p><strong>Centro de Costos:</strong> {{ solicitud.centro_costo.nombre }}</p>
+            {% if solicitud.tiempo_estimado %}
+                <p><strong>Tiempo Estimado:</strong> {{ solicitud.tiempo_estimado }} días</p>
+            {% endif %}
+            {% if solicitud.proveedor_seleccionado %}
+                <p><strong>Proveedor Seleccionado:</strong> {{ solicitud.proveedor_seleccionado.nombre }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Historial de Aprobaciones -->
+    <h3>Historial de Aprobaciones</h3>
+    {% if solicitud.aprobaciones %}
+        <table class="table table-bordered mb-4">
+            <thead class="thead-light">
+                <tr>
+                    <th>Aprueba</th>
+                    <th>Estado</th>
+                    <th>Comentario</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for aprobacion in solicitud.aprobaciones %}
+                    <tr>
+                        <td>{{ aprobacion.revisador.nombre_usuario }}</td>
+                        <td>
+                            {% if aprobacion.estado == 'Aprobada' %}
+                                <span class="badge badge-success">{{ aprobacion.estado }}</span>
+                            {% elif aprobacion.estado == 'Rechazada' %}
+                                <span class="badge badge-danger">{{ aprobacion.estado }}</span>
+                            {% else %}
+                                {{ aprobacion.estado }}
+                            {% endif %}
+                        </td>
+                        <td>{{ aprobacion.comentario }}</td>
+                        <td>{{ aprobacion.fecha_aprobacion.strftime('%d/%m/%Y %H:%M') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No hay aprobaciones registradas para esta solicitud.</p>
+    {% endif %}
+
+    <!-- Tabla de Productos -->
+    <h3>Productos</h3>
+    <table class="table table-bordered">
+        <thead class="thead-light">
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad Solicitada</th>
+                <th>Proveedores Asignados</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto_solicitud in solicitud.productos_solicitudes %}
+                <tr>
+                    <td>{{ producto_solicitud.producto.nombre }}</td>
+                    <td>{{ producto_solicitud.cantidad }}</td>
+                    <td>
+                        {% set proveedores = solicitud.productos_proveedores | selectattr('producto_id', 'equalto', producto_solicitud.producto.id) | list %}
+                        {% if proveedores %}
+                            <ul class="list-unstyled mb-0">
+                                {% for pp in proveedores %}
+                                    <li class="mb-1">
+                                        <strong>{{ pp.proveedor.nombre }}</strong> - Cantidad: {{ pp.cantidad }}
+                                        {% if pp.precio_ofrecido %}
+                                            - Precio: ${{ '%.2f'|format(pp.precio_ofrecido) }}
+                                        {% else %}
+                                            - Precio: <span class="text-muted">No ingresado</span>
+                                        {% endif %}
+                                        {% if pp.tiempo_estimado_envio %}
+                                            - Tiempo Estimado: {{ pp.tiempo_estimado_envio }} días
+                                        {% else %}
+                                            - Tiempo Estimado: <span class="text-muted">No ingresado</span>
+                                        {% endif %}
+
+                                        {% if solicitud.estado != 'Aprobada' and current_user.rol in ['revisor', 'supervisor', 'admin'] %}
+                                            <!-- Botón para eliminar proveedor asignado -->
+                                            <form method="POST" action="{{ url_for('main.eliminar_proveedor', solicitud_id=solicitud.id, proveedor_id=pp.proveedor.id, producto_id=producto_solicitud.producto.id) }}" style="display:inline;">
+                                                {{ eliminar_form.hidden_tag() }}
+                                                <button type="submit" class="btn btn-danger btn-sm ml-2" onclick="return confirm('¿Estás seguro de eliminar este proveedor?');">Eliminar</button>
+                                            </form>
+                                        {% endif %}
+                                    </li>
+
+                                    {% if solicitud.estado != 'Aprobada' and current_user.rol in ['revisor', 'supervisor', 'admin'] %}
+                                        <!-- Formulario para ingresar cotizaciones -->
+                                        {% if not pp.precio_ofrecido or not pp.tiempo_estimado_envio %}
+                                            <form method="POST" action="{{ url_for('main.ver_detalle_solicitud', solicitud_id=solicitud.id) }}" class="mt-2">
+                                                {{ ingresar_cotizacion_forms[pp.id].hidden_tag() }}
+                                                <input type="hidden" name="pp_id" value="{{ pp.id }}">
+                                                <div class="form-row">
+                                                    <div class="col">
+                                                        {{ ingresar_cotizacion_forms[pp.id].precio_ofrecido.label }}
+                                                        {{ ingresar_cotizacion_forms[pp.id].precio_ofrecido(class="form-control form-control-sm") }}
+                                                    </div>
+                                                    <div class="col">
+                                                        {{ ingresar_cotizacion_forms[pp.id].tiempo_estimado_envio.label }}
+                                                        {{ ingresar_cotizacion_forms[pp.id].tiempo_estimado_envio(class="form-control form-control-sm") }}
+                                                    </div>
+                                                    <div class="col-auto align-self-end">
+                                                        {{ ingresar_cotizacion_forms[pp.id].submit(class="btn btn-primary btn-sm mt-2") }}
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <span class="text-muted">No hay proveedores asignados.</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if solicitud.estado != 'Aprobada' and current_user.rol in ['revisor', 'supervisor', 'admin'] %}
+                            <!-- Botón para abrir el modal de asignación de proveedor -->
+                            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#asignarProveedorModal-{{ producto_solicitud.producto.id }}">
+                                Asignar Proveedor
+                            </button>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% if solicitud.estado != 'Aprobada' and current_user.rol in ['revisor', 'supervisor', 'admin'] %}
+                    <!-- Modal para asignar proveedor -->
+                    <div class="modal fade" id="asignarProveedorModal-{{ producto_solicitud.producto.id }}" tabindex="-1" role="dialog" aria-labelledby="asignarProveedorModalLabel-{{ producto_solicitud.producto.id }}" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <form method="POST" action="{{ url_for('main.asignar_proveedor_modal', solicitud_id=solicitud.id, producto_id=producto_solicitud.producto.id) }}">
+                                    {{ asignar_form.hidden_tag() }}
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="asignarProveedorModalLabel-{{ producto_solicitud.producto.id }}">Asignar Proveedor a {{ producto_solicitud.producto.nombre }}</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            {{ asignar_form.proveedor_id.label(class="form-label") }}
+                                            {{ asignar_form.proveedor_id(class="form-control") }}
+                                        </div>
+                                        <div class="form-group">
+                                            {{ asignar_form.cantidad.label(class="form-label") }}
+                                            {{ asignar_form.cantidad(class="form-control", value=producto_solicitud.cantidad) }}
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                        {{ asignar_form.submit(class="btn btn-primary") }}
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Sección para Generar PDFs y Enviar Correos -->
+    {% if current_user.rol in ['revisor', 'supervisor', 'admin'] %}
+        <h3>Proveedores Asociados</h3>
+        {% if solicitud.productos_proveedores %}
+            <table class="table table-bordered mb-4">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Proveedor</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set proveedores = solicitud.productos_proveedores | map(attribute='proveedor') | list %}
+                    {% set proveedores = proveedores | unique %}
+                    {% for proveedor in proveedores %}
+                        <tr>
+                            <td>{{ proveedor.nombre }}</td>
+                            <td>
+                                <!-- Botón para generar el PDF del proveedor -->
+                                <a href="{{ url_for('main.generar_pdf', solicitud_id=solicitud.id, proveedor_id=proveedor.id) }}" class="btn btn-info btn-sm" target="_blank">
+                                    Generar PDF
+                                </a>
+
+                                {% if solicitud.estado != 'Aprobada' %}
+                                    <!-- Verificar si el correo fue enviado -->
+                                    {% set producto_proveedor = solicitud.productos_proveedores | selectattr('proveedor_id', 'equalto', proveedor.id) | first %}
+                                    {% if producto_proveedor and producto_proveedor.correo_enviado %}
+                                        <span class="badge badge-success ml-2">Correo enviado</span>
+                                    {% else %}
+                                        <!-- Botón para enviar correo -->
+                                        <form method="POST" action="{{ url_for('main.enviar_correo_proveedor', solicitud_id=solicitud.id, proveedor_id=proveedor.id) }}" style="display:inline;">
+                                            {{ enviar_correo_form.hidden_tag() }}
+                                            {{ enviar_correo_form.submit(class="btn btn-primary btn-sm") }}
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted">No hay proveedores asignados a esta solicitud.</p>
+        {% endif %}
+    {% endif %}
+
+    <!-- Acciones de Aprobación/Rechazo para Supervisores/Admins -->
+    {% if current_user.rol in ['supervisor', 'admin'] and solicitud.estado in ['Pendiente', 'En proceso'] %}
+        <hr>
+        <h3>Aprobar o Rechazar Solicitud</h3>
+        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#aprobarSolicitudModal">
+            Aprobar Solicitud
+        </button>
+        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#rechazarSolicitudModal">
+            Rechazar Solicitud
+        </button>
+    {% endif %}
+
+    <!-- Modal para Aprobar Solicitud -->
+{% if current_user.rol in ['supervisor', 'admin'] and solicitud.estado in ['Pendiente', 'En proceso'] %}
+<div class="modal fade" id="aprobarSolicitudModal" tabindex="-1" role="dialog" aria-labelledby="aprobarSolicitudModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('main.aprobar_solicitud', solicitud_id=solicitud.id) }}">
+                {{ aprobar_form.hidden_tag() }}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aprobarSolicitudModalLabel">Aprobar Solicitud #{{ solicitud.id }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Detalles de los Proveedores -->
+                    <h6>Detalles de los Proveedores:</h6>
+                    {% for detalle in proveedores_con_detalles %}
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <strong>{{ detalle.proveedor.nombre }}</strong>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Precio Total:</strong> ${{ '%.2f'|format(detalle.total_precio) }}</p>
+                                <p><strong>Tiempo Estimado de Entrega:</strong> {{ detalle.tiempo_estimado_envio }} días</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                    <!-- Campo para Seleccionar Primer Proveedor -->
+                    <div class="form-group">
+                        {{ aprobar_form.proveedor_seleccionado_1.label(class="form-label") }}
+                        {{ aprobar_form.proveedor_seleccionado_1(class="form-control") }}
+                        {% for error in aprobar_form.proveedor_seleccionado_1.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Campo para Seleccionar Segundo Proveedor (Opcional) -->
+                    <div class="form-group">
+                        {{ aprobar_form.proveedor_seleccionado_2.label(class="form-label") }}
+                        {{ aprobar_form.proveedor_seleccionado_2(class="form-control") }}
+                        {% for error in aprobar_form.proveedor_seleccionado_2.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Campo de Comentario (Opcional) -->
+                    <div class="form-group">
+                        {{ aprobar_form.comentario.label(class="form-label") }}
+                        {{ aprobar_form.comentario(class="form-control", rows="4", placeholder="Comentario opcional") }}
+                        {% for error in aprobar_form.comentario.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    {{ aprobar_form.submit(class="btn btn-success") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+    
+    <!-- Modal para Rechazar Solicitud -->
+    <div class="modal fade" id="rechazarSolicitudModal" tabindex="-1" role="dialog" aria-labelledby="rechazarSolicitudModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="POST" action="{{ url_for('main.rechazar_solicitud', solicitud_id=solicitud.id) }}">
+                    {{ rechazar_form.hidden_tag() }}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="rechazarSolicitudModalLabel">Rechazar Solicitud #{{ solicitud.id }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            {{ rechazar_form.comentario.label(class="form-label") }}
+                            {{ rechazar_form.comentario(class="form-control", rows="4", placeholder="Razón del rechazo") }}
+                            {% for error in rechazar_form.comentario.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        {{ rechazar_form.submit(class="btn btn-danger") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if solicitud.estado == 'Aprobada' %}
+        <p class="text-success">Esta solicitud ha sido aprobada y ya no se pueden realizar cambios.</p>
+    {% endif %}
+
+</div>
+{% endblock %}

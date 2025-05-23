@@ -1,0 +1,107 @@
+<!-- templates/pdf_recepcion.html -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalles de Recepción #{{ recepcion.id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .logo {
+            width: 150px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <!-- Logo -->
+    <img src="data:image/png;base64,{{ logo_base64 }}" alt="Logo" class="logo">
+
+    <!-- Título -->
+    <h2>Detalles de Recepción #{{ recepcion.id }}</h2>
+
+    <!-- Información General de la Recepción -->
+    <p><strong>Número de Solicitud:</strong> {{ recepcion.solicitud.id }}</p>
+    <p><strong>Fecha de Recepción:</strong> {{ recepcion.fecha_recepcion.strftime('%d/%m/%Y %H:%M') }}</p>
+    <p><strong>Recepcionado Por:</strong> {{ recepcion.usuario.nombre_usuario }}</p>
+    <p><strong>Comentarios Generales:</strong> {{ recepcion.comentario_general or 'N/A' }}</p>
+
+    <!-- Productos Recepcionados -->
+    <h3>Productos Recepcionados:</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad Solicitada</th>
+                <th>Cantidad Recibida</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto_solicitud in recepcion.solicitud.productos_solicitudes %}
+            <tr>
+                <td>{{ producto_solicitud.producto.nombre }}</td>
+                <td>{{ producto_solicitud.cantidad }}</td>
+                <td>{{ producto_solicitud.cantidad_recibida or 0 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Historial de Aprobaciones -->
+    <h3>Historial de Aprobaciones:</h3>
+    {% if recepcion.solicitud.aprobaciones %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Revisado Por</th>
+                    <th>Comentario</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for aprobacion in recepcion.solicitud.aprobaciones %}
+                <tr>
+                    <td>{{ aprobacion.fecha_aprobacion.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>{{ aprobacion.estado }}</td>
+                    <td>{{ aprobacion.revisador.nombre_usuario }}</td>
+                    <td>{{ aprobacion.comentario or 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay aprobaciones registradas para esta solicitud.</p>
+    {% endif %}
+
+    <!-- Información del Proveedor -->
+    <h3>Información del Proveedor:</h3>
+    {% if recepcion.solicitud.proveedor_seleccionado %}
+        <p><strong>Proveedor Seleccionado:</strong> {{ recepcion.solicitud.proveedor_seleccionado.nombre }}</p>
+        <p><strong>Correo:</strong> {{ recepcion.solicitud.proveedor_seleccionado.correo }}</p>
+        <p><strong>Teléfono:</strong> {{ recepcion.solicitud.proveedor_seleccionado.telefono }}</p>
+    {% else %}
+        <p>No se ha seleccionado un proveedor para esta solicitud.</p>
+    {% endif %}
+</body>
+</html>

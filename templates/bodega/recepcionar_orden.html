@@ -1,0 +1,45 @@
+<!-- templates/bodega/recepcionar_orden.html -->
+
+{% extends 'base.html' %}
+{% block title %}Recepcionar Orden{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Recepcionar Orden #{{ solicitud.id }}</h2>
+
+    <form method="POST" action="{{ url_for('main.recepcionar_solicitud', solicitud_id=solicitud.id) }}">
+        {{ form.hidden_tag() }}  <!-- Asegura la inclusión del token CSRF -->
+
+        <table class="table table-bordered">
+            <thead class="thead-light">
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad Solicitada</th>
+                    <th>Recibido</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto_form in form.productos %}
+                <tr>
+                    <td>
+                        {% set producto = solicitud.productos_solicitudes[loop.index0].producto %}
+                        {{ producto.nombre }}
+                        {{ producto_form.producto_id }}
+                    </td>
+                    <td>{{ solicitud.productos_solicitudes[loop.index0].cantidad }}</td>
+                    <td>{{ producto_form.recibido() }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="form-group">
+            {{ form.comentario_general.label(class="form-label") }}
+            {{ form.comentario_general(class="form-control", rows="3") }}
+        </div>
+
+        <button type="submit" class="btn btn-success">Confirmar Recepción</button>
+        <a href="{{ url_for('main.ordenes_pendientes') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+<!-- templates/login.html -->
+
+{% extends 'base.html' %}
+{% block title %}Iniciar Sesión{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Iniciar Sesión</h2>
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('main.login') }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-group">
+                    {{ form.nombre_usuario.label(class="form-label") }}
+                    {{ form.nombre_usuario(class="form-control", placeholder="Ingrese su nombre de usuario") }}
+                    {% for error in form.nombre_usuario.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.contraseña.label(class="form-label") }}
+                    {{ form.contraseña(class="form-control", placeholder="Ingrese su contraseña") }}
+                    {% for error in form.contraseña.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group form-check">
+                    {{ form.remember_me(class="form-check-input") }}
+                    {{ form.remember_me.label(class="form-check-label") }}
+                </div>
+                
+                <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

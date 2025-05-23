@@ -1,0 +1,50 @@
+<!-- templates/historial_aprobaciones.html -->
+
+{% extends 'base.html' %}
+{% block title %}Historial de Aprobaciones{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Historial de Aprobaciones para Solicitud #{{ solicitud.id }}</h2>
+    <div class="card mb-4">
+        <div class="card-body">
+            <p><strong>Solicitante:</strong> {{ solicitud.solicitante.nombre_usuario }}</p>
+            <p><strong>Centro de Costos:</strong> {{ solicitud.centro_costo.nombre }}</p>
+            <p><strong>Fecha:</strong> {{ solicitud.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+            <p><strong>Estado Actual:</strong> {{ solicitud.estado }}</p>
+        </div>
+    </div>
+
+    {% if historial %}
+        <table class="table table-bordered">
+            <thead class="thead-light">
+                <tr>
+                    <th>Aprobador</th>
+                    <th>Estado</th>
+                    <th>Comentario</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for aprobacion in historial %}
+                    <tr>
+                        <td>{{ aprobacion.aprobador.nombre_usuario }}</td>
+                        <td>
+                            {% if aprobacion.estado == 'Aprobada' %}
+                                <span class="badge badge-success">{{ aprobacion.estado }}</span>
+                            {% else %}
+                                <span class="badge badge-danger">{{ aprobacion.estado }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ aprobacion.comentario }}</td>
+                        <td>{{ aprobacion.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No hay historial de aprobaciones para esta solicitud.</p>
+    {% endif %}
+    <a href="{{ url_for('main.revisar_solicitudes') }}" class="btn btn-secondary">Volver a Revisar Solicitudes</a>
+</div>
+{% endblock %}

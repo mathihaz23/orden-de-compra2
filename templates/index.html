@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block title %}Inicio - Compras Foraction{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Bienvenido a Compras Foraction</h2>
+
+    <!-- Tarjetas de Métricas -->
+    <!-- ... tus tarjetas aquí ... -->
+
+    <!-- Gráfico de Compras por Centro de Costo -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body chart-container">
+            <h5 class="card-title">Compras por Centro de Costo</h5>
+            <canvas id="comprasPorCentroChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfico de Gastos Mensuales -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body chart-container">
+            <h5 class="card-title">Evolución de Gastos Mensuales</h5>
+            <canvas id="gastosMensualesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- ... otros contenidos ... -->
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Incluye Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Variables globales para las instancias de los gráficos
+        let comprasPorCentroChart = null;
+        let gastosMensualesChart = null;
+
+        // Función para crear o actualizar el gráfico de Compras por Centro de Costo
+        function renderComprasPorCentro(data) {
+    console.log('Actualizando gráfico de Compras por Centro de Costo...');
+    const canvas = document.getElementById('comprasPorCentroChart');
+    const mensaje = document.getElementById('comprasPorCentroMensaje');
+
+    // Verificar si todos los datos son cero
+    const allZero = data.compras_por_centro.gastos.every(value => value === 0);
+
+    if (allZero) {
+        // Ocultar el canvas y mostrar el mensaje
+        canvas.style.display = 'none';
+        mensaje.style.display = 'block';
+        console.log('No hay datos para mostrar en el gráfico de Compras por Centro de Costo.');
+        return;
+    } else {
+        // Mostrar el canvas y ocultar el mensaje
+        canvas.style.display = 'block';
+        mensaje.style.display = 'none';
+    }
+
+    const ctx = canvas.getContext('2d');
+
+    if (comprasPorCentroChart) {
+        // Actualizar etiquetas y datos
+        comprasPorCentroChart.data.labels = data.compras_por_centro.centros;
+        comprasPorCentroChart.data.datasets[0].data = data.compras_por_centro.gastos;
+        comprasPorCentroChart.update();
+        console.log('Gráfico de Compras por Centro de Costo actualizado.');
+    } else {
+        // Crear el gráfico por primera vez
+        comprasPorCentroChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.compras_por_centro.centros,
+                datasets: [{
+                    label: 'Gastos ($)',
+                    data: data.compras_por_centro.gastos,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Gastos en Dólares'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Centros de Costo'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Compras por Centro de Costo'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return '$' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        console.log('Gráfico de Compras por Centro de Costo creado.');
+    }
+}
+
+function renderGastosMensuales(data) {
+    console.log('Actualizando gráfico de Gastos Mensuales...');
+    const canvas = document.getElementById('gastosMensualesChart');
+    const mensaje = document.getElementById('gastosMensualesMensaje');
+
+    // Verificar si todos los datos son cero
+    const allZero = data.gastos_mensuales.gastos.every(value => value === 0);
+
+    if (allZero) {
+        // Ocultar el canvas y mostrar el mensaje
+        canvas.style.display = 'none';
+        mensaje.style.display = 'block';
+        console.log('No hay datos para mostrar en el gráfico de Gastos Mensuales.');
+        return;
+    } else {
+        // Mostrar el canvas y ocultar el mensaje
+        canvas.style.display = 'block';
+        mensaje.style.display = 'none';
+    }
+
+    const ctx = canvas.getContext('2d');
+
+    if (gastosMensualesChart) {
+        // Actualizar etiquetas y datos
+        gastosMensualesChart.data.labels = data.gastos_mensuales.meses;
+        gastosMensualesChart.data.datasets[0].data = data.gastos_mensuales.gastos;
+        gastosMensualesChart.update();
+        console.log('Gráfico de Gastos Mensuales actualizado.');
+    } else {
+        // Crear el gráfico por primera vez
+        gastosMensualesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.gastos_mensuales.meses,
+                datasets: [{
+                    label: 'Gastos Mensuales ($)',
+                    data: data.gastos_mensuales.gastos,
+                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Gastos en Dólares'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Meses'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Evolución de Gastos Mensuales'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return '$' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        console.log('Gráfico de Gastos Mensuales creado.');
+    }
+}
+
+
+        // Función para obtener los datos del dashboard
+        function obtenerDatosDashboard() {
+            console.log('Obteniendo datos del dashboard...');
+            fetch('{{ url_for("main.dashboard_data") }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error en la API:', data.error);
+                        // Puedes mostrar una notificación al usuario aquí
+                        return;
+                    }
+                    console.log('Datos recibidos del dashboard:', data);
+                    renderComprasPorCentro(data);
+                    renderGastosMensuales(data);
+                })
+                .catch(error => {
+                    console.error('Error al obtener los datos del dashboard:', error);
+                    // Puedes mostrar una notificación de error al usuario aquí
+                });
+        }
+
+        // Inicializar los gráficos al cargar la página
+        obtenerDatosDashboard();
+
+        // Actualizar los gráficos periódicamente (por ejemplo, cada 30 segundos)
+        setInterval(obtenerDatosDashboard, 30000);
+    });
+</script>
+{% endblock %}

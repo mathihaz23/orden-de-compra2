@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Reportes de Inventario{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Generar Reportes de Inventario</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-row">
+            <div class="form-group col-md-5">
+                {{ form.fecha_inicio.label(class="form-label") }}
+                {{ form.fecha_inicio(class="form-control") }}
+                {% for error in form.fecha_inicio.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div class="form-group col-md-5">
+                {{ form.fecha_fin.label(class="form-label") }}
+                {{ form.fecha_fin(class="form-control") }}
+                {% for error in form.fecha_fin.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div class="form-group col-md-2 align-self-end">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </div>
+    </form>
+
+    {% if report_data %}
+        <h3 class="mt-4">Reporte de Movimientos del {{ form.fecha_inicio.data.strftime('%d/%m/%Y') }} al {{ form.fecha_fin.data.strftime('%d/%m/%Y') }}</h3>
+        <table class="table table-bordered">
+            <thead class="thead-light">
+                <tr>
+                    <th>Producto</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                    <th>Descripción</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for movimiento in report_data %}
+                <tr>
+                    <td>{{ movimiento.nombre_producto }}</td>
+                    <td>{{ movimiento.tipo.capitalize() }}</td>
+                    <td>{{ movimiento.cantidad }}</td>
+                    <td>{{ movimiento.descripcion or 'N/A' }}</td>
+                    <td>{{ movimiento.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+<!-- templates/pdf_proveedor.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Cotización Solicitud #{{ solicitud.id }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            background-color: #ffffff; /* Azul corporativo */
+            color: #030303;
+            padding: 20px;
+        }
+        .header img {
+            max-width: 100px;
+            margin-right: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .details {
+            margin-bottom: 20px;
+        }
+        .details p {
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #aaa;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #010408; /* Azul corporativo */
+            color: #fff;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            position: fixed;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            color: #888;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <!-- Imagen en Base64 -->
+        <img src="data:image/png;base64,{{ logo_base64 }}" alt="Logo Empresa">
+        <div>
+            <h1>Cotización para Solicitud #{{ solicitud.id }}</h1>
+            <p><strong>Fecha:</strong> {{ solicitud.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="details">
+            <p><strong>Proveedor:</strong> {{ proveedor.nombre }}</p>
+            <p><strong>Email:</strong> {{ proveedor.correo }}</p>
+            <p><strong>Teléfono:</strong> {{ proveedor.telefono }}</p>
+        </div>
+
+        <h2>Productos Asignados</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto_proveedor in productos_proveedor %}
+                    <tr>
+                        <td>{{ producto_proveedor.producto.nombre }}</td>
+                        <td>{{ producto_proveedor.cantidad }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>Gracias por su colaboración.</p>
+    </div>
+</body>
+</html>

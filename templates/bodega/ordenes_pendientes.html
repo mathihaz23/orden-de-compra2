@@ -1,0 +1,103 @@
+<!-- templates/bodega/ordenes_pendientes.html -->
+
+{% extends 'base.html' %}
+
+{% block title %}Órdenes Pendientes de Recepción{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Órdenes Pendientes de Recepción</h2>
+    {% if ordenes %}
+        <table class="table table-bordered">
+            <thead class="thead-light">
+                <tr>
+                    <th>Número de OC</th>
+                    <th>Proveedor</th>
+                    <th>Fecha de Creación</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for oc in ordenes %}
+                <tr>
+                    <td>{{ oc.id }}</td>
+                    <td>{{ oc.proveedor.nombre }}</td>
+                    <td>{{ oc.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ oc.estado }}</td>
+                    <td>
+                        <!-- Botón que abre el modal -->
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#detalleModal{{ oc.id }}">
+                            Ver Detalles
+                        </button>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="detalleModal{{ oc.id }}" tabindex="-1" role="dialog" aria-labelledby="detalleModalLabel{{ oc.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <form method="POST" action="{{ url_for('main.recepcionar_orden', oc_id=oc.id) }}">
+                                        {{ form.hidden_tag() }}  <!-- Importante para CSRF -->
+
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="detalleModalLabel{{ oc.id }}">Detalle de Orden de Compra #{{ oc.id }}</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p><strong>Proveedor:</strong> {{ oc.proveedor.nombre }}</p>
+                                            <p><strong>Fecha de Creación:</strong> {{ oc.fecha_creacion.strftime('%d/%m/%Y') }}</p>
+                                            <p><strong>Estado:</strong> {{ oc.estado }}</p>
+                                            <h5>Productos Incluidos:</h5>
+                                            <table class="table table-bordered">
+                                                <thead>
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>Producto</th>
+                                                        <th>Cantidad Solicitada</th>
+                                                        <th>Recibido</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for producto_orden in oc.productos_orden %}
+                                                    <tr>
+                                                        <td>{{ loop.index0 }}</td>
+                                                        <td>{{ producto_orden.producto.nombre }}</td>
+                                                        <td>{{ producto_orden.cantidad }}</td>
+                                                        <td>
+                                                            <!-- Checkbox para marcar como recibido -->
+                                                            <input type="checkbox" name="productos-{{ loop.index0 }}-recibido" id="recibido_{{ oc.id }}_{{ producto_orden.producto.id }}">
+                                                            <input type="hidden" name="productos-{{ loop.index0 }}-producto_id" value="{{ producto_orden.producto.id }}">
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+
+                                            <!-- Campo de comentarios generales -->
+                                            <div class="form-group">
+                                                <label for="comentario_general{{ oc.id }}">Comentarios Generales</label>
+                                                <textarea name="comentario_general" id="comentario_general{{ oc.id }}" class="form-control" rows="3"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-success">Confirmar Recepción</button>
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Fin del Modal -->
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="alert alert-info mt-3" role="alert">
+            No hay órdenes pendientes de recepción.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

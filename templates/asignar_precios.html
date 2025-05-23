@@ -1,0 +1,32 @@
+<!-- templates/asignar_precios.html -->
+
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Asignar Precios a Proveedores - Solicitud #{{ solicitud.id }}</h1>
+
+<form method="POST">
+    {{ csrf_token() }}
+    <table>
+        <thead>
+            <tr>
+                <th>Proveedor</th>
+                <th>Producto</th>
+                <th>Precio Ofrecido</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pp in productos_proveedores %}
+            <tr>
+                <td>{{ pp.proveedor.nombre }}</td>
+                <td>{{ pp.producto.nombre }}</td>
+                <td>
+                    <input type="number" step="0.01" name="precio_{{ pp.id }}" value="{{ pp.precio_ofrecido or '' }}" required>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit" class="btn btn-primary">Asignar Precios</button>
+</form>
+{% endblock %}
